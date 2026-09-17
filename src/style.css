@@ -388,9 +388,250 @@ html, body {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(480px, 1.35fr) minmax(320px, 1fr) minmax(340px, 1.05fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.28fr) minmax(0, 1fr);
+  gap: 14px;
   align-items: start;
+}
+
+/* Top KPI Ribbon (Always visible at top of dashboard without scrolling) */
+.top-kpi-ribbon {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.top-kpi-ribbon .kpi-cell {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: var(--shadow-xs);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.top-kpi-ribbon .kpi-cell:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.kpi-cell-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpi-icon-badge {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Quick Emergency Command & Action Bar */
+.quick-command-bar {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-xs);
+}
+
+.quick-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quick-chip-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.quick-action-btn {
+  padding: 6px 11px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-surface-subtle);
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.quick-action-btn:hover {
+  background: #f1f5f9;
+  border-color: var(--border-focus);
+}
+
+.btn-danger-pill {
+  color: #dc2626 !important;
+  border-color: #fecaca !important;
+  background: #fef2f2 !important;
+}
+
+.btn-danger-pill:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+}
+
+.quick-locations-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.loc-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  margin-right: 2px;
+}
+
+.loc-chip {
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-subtle);
+  background: #ffffff;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.loc-chip:hover {
+  background: #f8fafc;
+  color: var(--color-primary);
+  border-color: #bfdbfe;
+}
+
+.loc-chip.active {
+  background: #eff6ff;
+  color: var(--color-primary);
+  border-color: #93c5fd;
+  font-weight: 700;
+}
+
+.loc-chip.locating {
+  animation: pulse-dot 1s infinite alternate;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Command Center Right Column & Tabs */
+.command-center-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.command-card {
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cc-header {
+  padding: 6px 8px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.cc-tab-bar {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+
+.cc-tab {
+  flex: 1;
+  padding: 7px 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.cc-tab:hover {
+  color: var(--text-primary);
+  background: #ffffff;
+}
+
+.cc-tab.active {
+  background: #ffffff;
+  color: var(--color-primary);
+  border-color: var(--border-subtle);
+  font-weight: 700;
+  box-shadow: var(--shadow-xs);
+}
+
+.cc-body {
+  padding: 12px;
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+
+.cc-panel {
+  display: none;
+}
+
+.cc-panel.active {
+  display: block;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.feed-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.feed-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.feed-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.section-title-sm {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
 }
 
 /* Standard Widget Card (Light Theme) */
@@ -446,7 +687,7 @@ html, body {
 }
 
 .map-card {
-  height: 680px;
+  height: 500px;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -1492,13 +1733,16 @@ html, body {
    -------------------------------------------------------------------------- */
 @media (max-width: 1200px) {
   .dashboard-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
-  .map-column {
-    grid-column: span 2;
+  .top-kpi-ribbon {
+    grid-template-columns: repeat(4, 1fr);
   }
   .map-card {
-    height: 520px;
+    height: 440px;
+  }
+  .command-card {
+    height: 480px;
   }
 }
 
@@ -1506,11 +1750,23 @@ html, body {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-  .map-column {
-    grid-column: span 1;
+  .top-kpi-ribbon {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .quick-command-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .quick-actions-group {
+    justify-content: space-between;
   }
   .map-card {
-    height: 420px;
+    height: 360px;
+  }
+  .command-card {
+    height: 460px;
   }
   .left-rail {
     display: none;
@@ -1532,6 +1788,17 @@ html, body {
     padding: 8px 10px;
   }
   .kpi-value {
-    font-size: 22px;
+    font-size: 20px;
   }
+}
+
+/* Tab jump flash highlight */
+.widget-highlight {
+  animation: widget-glow 1.8s ease-in-out;
+}
+
+@keyframes widget-glow {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+  30% { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.45); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
 }

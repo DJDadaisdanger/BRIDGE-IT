@@ -151,6 +151,82 @@
 
       <!-- Main Central Dashboard Grid -->
       <main class="main-content" id="main-content">
+        <!-- Top High-Visibility Key Ops Metric Ribbon (Always Visible Without Scrolling) -->
+        <div class="top-kpi-ribbon" id="top-kpi-ribbon" aria-label="Key Operational Metrics">
+          <div class="kpi-cell" id="kpi-card-relieved">
+            <div class="kpi-cell-top">
+              <span class="kpi-label">Total Relieved</span>
+              <span class="kpi-icon-badge">👥</span>
+            </div>
+            <span class="kpi-value" id="kpi-total-relieved">45,820</span>
+            <span class="kpi-trend trend-up">↑ +12.4% vs prev 24h</span>
+          </div>
+
+          <div class="kpi-cell" id="kpi-card-resources">
+            <div class="kpi-cell-top">
+              <span class="kpi-label">Resources Dist.</span>
+              <span class="kpi-icon-badge">📦</span>
+            </div>
+            <span class="kpi-value" id="kpi-resources-dist">112T</span>
+            <span class="kpi-trend trend-up">↑ +8.1T today</span>
+          </div>
+
+          <div class="kpi-cell" id="kpi-card-rescued">
+            <div class="kpi-cell-top">
+              <span class="kpi-label">Survivors Rescued</span>
+              <span class="kpi-icon-badge">🛟</span>
+            </div>
+            <span class="kpi-value" id="kpi-survivors-rescued">2,150</span>
+            <span class="kpi-trend trend-up">↑ +24 verified</span>
+          </div>
+
+          <div class="kpi-cell" id="kpi-card-needs">
+            <div class="kpi-cell-top">
+              <span class="kpi-label">Open Needs</span>
+              <span class="kpi-icon-badge">⚠️</span>
+            </div>
+            <span class="kpi-value" id="kpi-open-needs">89</span>
+            <span class="kpi-trend trend-warning">⚠️ 14 Critical Gaps</span>
+          </div>
+        </div>
+
+        <!-- Quick Emergency Command & Location Action Bar (No Scrolling Needed) -->
+        <div class="quick-command-bar" id="quick-command-bar" aria-label="Quick Actions & Operations Hubs">
+          <div class="quick-actions-group">
+            <button class="btn-primary" id="btn-open-report-modal" type="button" title="Broadcast a new relief or rescue activity">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>+ New Report</span>
+            </button>
+            <div class="quick-chip-buttons">
+              <button type="button" class="quick-action-btn" id="btn-quick-rescue" title="Log 8 rescued survivors">
+                👥 +8 Rescued
+              </button>
+              <button type="button" class="quick-action-btn" id="btn-quick-food" title="Log 25 food kits distributed">
+                📦 +25 Food
+              </button>
+              <button type="button" class="quick-action-btn" id="btn-quick-water" title="Log 250G clean water distributed">
+                💧 +250G Water
+              </button>
+              <button type="button" class="quick-action-btn btn-danger-pill" id="btn-quick-alert" title="Broadcast critical resource gap alert">
+                ⚠️ Gap Alert
+              </button>
+            </div>
+          </div>
+
+          <div class="quick-locations-group" id="quick-location-chips">
+            <span class="loc-label" id="quick-zone-badge">📍 Active: India (NCR)</span>
+            <button type="button" class="loc-chip active" id="chip-detect-gps" title="Center map onto real GPS/IP location">
+              📍 Detect GPS
+            </button>
+            <button type="button" class="loc-chip" data-preset="india-delhi">🇮🇳 Delhi</button>
+            <button type="button" class="loc-chip" data-preset="india-mumbai">🇮🇳 Mumbai</button>
+            <button type="button" class="loc-chip" data-preset="india-bengaluru">🇮🇳 Bengaluru</button>
+            <button type="button" class="loc-chip" data-preset="india-kolkata">🇮🇳 Kolkata</button>
+            <button type="button" class="loc-chip" data-preset="india-chennai">🇮🇳 Chennai</button>
+            <button type="button" class="loc-chip" data-preset="india-pune">🇮🇳 Pune</button>
+          </div>
+        </div>
+
         <div class="dashboard-grid">
 
           <!-- ================================================================
@@ -159,8 +235,14 @@
           <section class="map-column" aria-label="Geotagged Heat Map">
             <div class="card map-card">
               <div class="card-header">
-                <span class="card-title">Map View (Geotagged Heat Map)</span>
-                <span class="card-subtitle">Real-time GPS & Mesh Telemetry</span>
+                <div>
+                  <span class="card-title">Map View (Geotagged Heat Map)</span>
+                  <span class="card-subtitle">Live GPS Telemetry & Mesh Grid</span>
+                </div>
+                <div class="map-header-tools">
+                  <span class="badge-status-dot"></span>
+                  <span style="font-size:11.5px;font-weight:600;color:var(--text-secondary);">Real-Time Map</span>
+                </div>
               </div>
               <div class="card-body">
                 <!-- Leaflet Map Container -->
@@ -184,25 +266,18 @@
                     </li>
                     <li class="legend-item">
                       <span class="legend-dot dot-resources"></span>
-                      <span>Resources</span>
+                      <span>Resources Cache</span>
                     </li>
                     <li class="legend-item">
                       <span class="legend-dot dot-rescued"></span>
                       <span>Survivors Rescued</span>
                     </li>
                   </ul>
-                  <!-- GPS Detect & Sample Data Buttons -->
+                  <!-- GPS Detect Button -->
                   <button class="gps-btn" id="btn-detect-gps" type="button" title="Center map directly onto your real GPS/IP location">
                     <span>📍</span>
-                    <span>Detect My Location (GPS / IP)</span>
+                    <span>Detect My GPS Location</span>
                   </button>
-                  <div class="location-test-row">
-                    <button class="btn-test-location" id="btn-generate-sample-data" type="button" title="Generate realistic sample disaster relief points around current center">
-                      <span>⚡</span>
-                      <span>Generate Sample Data Here</span>
-                    </button>
-                  </div>
-                  <div class="location-coords-badge" id="active-coords-badge">Center: 28.6139° N, 77.2090° E</div>
                 </div>
 
                 <!-- Floating Overlay 2: Map Controls & Heat Map Layers -->
@@ -260,7 +335,7 @@
                     <span class="control-label">Area Search</span>
                     <div class="search-input-group">
                       <input type="text" class="search-input" id="map-area-search" placeholder="City Grid / Sector" aria-label="Search area or sector" />
-                      <span class="search-icon-inside">🔍</span>
+                      <button type="button" class="search-icon-inside" id="btn-map-search" aria-label="Search" style="background:none;border:none;cursor:pointer;padding:0;">🔍</button>
                     </div>
                   </div>
                 </div>
@@ -280,182 +355,125 @@
           </section>
 
           <!-- ================================================================
-               Column 2: Key Ops, Gaps Identified Bar Chart, Resource Breakdown
+               Column 2: Unified Command Center (Tabs: Feed, Resources, Gaps, Units)
                ================================================================ -->
-          <section class="center-column" aria-label="Operations Overview and Charts">
-            <!-- Widget 1: Key Ops Overview -->
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title">Key Ops Overview (Global & Local)</span>
-              </div>
-              <div class="card-body">
-                <div class="kpi-grid">
-                  <div class="kpi-cell">
-                    <span class="kpi-label">Total Relieved</span>
-                    <span class="kpi-value" id="kpi-total-relieved">45,820</span>
-                    <span class="kpi-trend trend-up">↑ +12.4% vs prev 24h</span>
-                  </div>
-                  <div class="kpi-cell">
-                    <span class="kpi-label">Resources Dist.</span>
-                    <span class="kpi-value" id="kpi-resources-dist">112T</span>
-                    <span class="kpi-trend trend-up">↑ +8.1T today</span>
-                  </div>
-                  <div class="kpi-cell">
-                    <span class="kpi-label">Survivors Rescued</span>
-                    <span class="kpi-value" id="kpi-survivors-rescued">2,150</span>
-                    <span class="kpi-trend trend-up">↑ +24 verified</span>
-                  </div>
-                  <div class="kpi-cell">
-                    <span class="kpi-label">Open Needs</span>
-                    <span class="kpi-value" id="kpi-open-needs">89</span>
-                    <span class="kpi-trend trend-warning">⚠️ 14 Critical</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Widget 2: Gaps Identified Bar Chart -->
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title">Gaps Identified - <span id="gaps-identified-count">14</span></span>
-              </div>
-              <div class="card-body">
-                <div class="chart-card-meta">
-                  <span class="chart-subtitle">Total Relieved: [NGO] (City Center)</span>
-                  <div class="chart-mini-legend">
-                    <span><span class="legend-block legend-total"></span> Total</span>
-                    <span><span class="legend-block legend-status"></span> Status</span>
-                  </div>
-                </div>
-
-                <!-- Custom High-Contrast HTML/CSS Bar Chart -->
-                <div class="bar-chart-container">
-                  <div class="chart-y-axis">
-                    <span>10,000</span>
-                    <span>8,000</span>
-                    <span>6,000</span>
-                    <span>4,000</span>
-                    <span>2,000</span>
-                    <span>0</span>
-                  </div>
-                  <div class="chart-plot-area" id="bar-chart-plot">
-                    <!-- Dynamic Bars will be rendered here -->
-                  </div>
-                </div>
-
-                <!-- X Axis Category Labels -->
-                <div class="chart-x-labels">
-                  <span class="chart-x-label">Water</span>
-                  <span class="chart-x-label">Food</span>
-                  <span class="chart-x-label">Medical</span>
-                  <span class="chart-x-label">Shelter</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Widget 3: Resource Breakdown -->
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title">Resource Breakdown</span>
-              </div>
-              <div class="card-body">
-                <div class="resource-pill-row">
-                  <span style="font-weight:700;color:var(--text-muted);font-size:11px;">Chart</span>
-                  <span class="resource-pill"><span class="res-dot res-water"></span> Water</span>
-                  <span class="resource-pill"><span class="res-dot res-food"></span> Food</span>
-                  <span class="resource-pill"><span class="res-dot res-med"></span> Medical</span>
-                  <span class="resource-pill"><span class="res-dot res-shelter"></span> Shelter</span>
-                </div>
-
-                <!-- Stacked Progress Bar -->
-                <div class="stacked-progress-bar" id="resource-progress-bar">
-                  <!-- Dynamically populated segments -->
-                </div>
-
-                <!-- Detailed Breakdown List -->
-                <div class="resource-stat-list" id="resource-stat-list">
-                  <!-- Dynamically populated resource details -->
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- ================================================================
-               Column 3: Live Feeds, Leaderboard, Connectivity, Add Report Action
-               ================================================================ -->
-          <section class="right-column" aria-label="Field Updates and Management">
-            <!-- Widget 1: Recent Field Updates -->
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <span class="card-title">Recent Field Updates</span>
-                </div>
-                <span class="card-subtitle">Live Feed</span>
-              </div>
-              <div class="card-body">
-                <div class="live-feed-list" id="live-feed-list">
-                  <!-- Feed items loaded from localStorage -->
-                </div>
-              </div>
-            </div>
-
-            <!-- Widget 2: Volunteer Leaderboard -->
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <span class="card-title">Volunteer Leaderboard</span>
-                </div>
-                <span class="card-subtitle">Organizational Rank</span>
-              </div>
-              <div class="card-body">
-                <div class="leaderboard-list" id="leaderboard-list">
-                  <!-- Leaderboard loaded dynamically -->
-                </div>
-              </div>
-            </div>
-
-            <!-- Widget 3: NGO & Government Connectivity Status -->
-            <div class="card connectivity-card">
-              <div class="card-header">
-                <div>
-                  <span class="card-title">NGO & Government Connectivity Status</span>
-                </div>
-                <span class="card-subtitle">Live status</span>
-              </div>
-              <div class="card-body">
-                <div class="status-row">
-                  <span style="color:var(--text-secondary);font-weight:600;">NGO Devices:</span>
-                  <span id="conn-ngo-devices" style="font-weight:700;color:var(--text-primary);">42 Connected (3 via LoRa Mesh)</span>
-                </div>
-                <div class="status-row">
-                  <span style="color:var(--text-secondary);font-weight:600;">Gov Hubs:</span>
-                  <span class="status-badge-online" id="conn-gov-hubs">18 Online</span>
-                </div>
-                <div class="status-row">
-                  <span style="color:var(--text-secondary);font-weight:600;">Edge Nodes:</span>
-                  <span class="status-badge-online" id="conn-edge-nodes">9/9 Active</span>
-                </div>
-                <div class="sync-central-row">
-                  <span class="spin-icon">🔄</span>
-                  <span id="conn-sync-text">Syncing with Central Server</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Widget 4: Add Relief Activity (+ New Report) -->
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title">Add Relief Activity</span>
-              </div>
-              <div class="card-body">
-                <div class="action-box">
-                  <button class="btn-primary" id="btn-open-report-modal" type="button">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    <span>+ New Report</span>
+          <section class="command-center-column" aria-label="Operations and Logistics">
+            <div class="card command-card" id="command-center-card">
+              <!-- Command Center Tabbed Header -->
+              <div class="card-header cc-header">
+                <div class="cc-tab-bar" role="tablist">
+                  <button type="button" class="cc-tab active" id="tab-feed" data-target="panel-feed" role="tab" aria-selected="true">
+                    <span>📡 Live Feed</span>
                   </button>
-                  <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:2px;">
-                    Broadcasts instantly to regional edge node and mesh queue.
-                  </p>
+                  <button type="button" class="cc-tab" id="tab-resources" data-target="panel-resources" role="tab" aria-selected="false">
+                    <span>📊 Resources</span>
+                  </button>
+                  <button type="button" class="cc-tab" id="tab-gaps" data-target="panel-gaps" role="tab" aria-selected="false">
+                    <span>📉 Gaps (<span id="gaps-identified-count">14</span>)</span>
+                  </button>
+                  <button type="button" class="cc-tab" id="tab-units" data-target="panel-units" role="tab" aria-selected="false">
+                    <span>🤝 Teams & Mesh</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="card-body cc-body">
+                <!-- Panel 1: Recent Field Updates Live Feed -->
+                <div class="cc-panel active" id="panel-feed" role="tabpanel">
+                  <div class="feed-header-bar">
+                    <span class="feed-title">Real-Time Field Incident Feed</span>
+                    <span class="feed-sub">Synced across Edge Nodes</span>
+                  </div>
+                  <div class="live-feed-list" id="live-feed-list">
+                    <!-- Feed items loaded dynamically -->
+                  </div>
+                </div>
+
+                <!-- Panel 2: Resource Breakdown -->
+                <div class="cc-panel" id="panel-resources" role="tabpanel" style="display:none;">
+                  <div class="resource-pill-row">
+                    <span style="font-weight:700;color:var(--text-muted);font-size:11px;">Category</span>
+                    <span class="resource-pill"><span class="res-dot res-water"></span> Water</span>
+                    <span class="resource-pill"><span class="res-dot res-food"></span> Food</span>
+                    <span class="resource-pill"><span class="res-dot res-med"></span> Medical</span>
+                    <span class="resource-pill"><span class="res-dot res-shelter"></span> Shelter</span>
+                  </div>
+
+                  <!-- Stacked Progress Bar -->
+                  <div class="stacked-progress-bar" id="resource-progress-bar">
+                    <!-- Dynamically populated segments -->
+                  </div>
+
+                  <!-- Detailed Breakdown List -->
+                  <div class="resource-stat-list" id="resource-stat-list">
+                    <!-- Dynamically populated resource details -->
+                  </div>
+                </div>
+
+                <!-- Panel 3: Gaps Identified Bar Chart -->
+                <div class="cc-panel" id="panel-gaps" role="tabpanel" style="display:none;">
+                  <div class="chart-card-meta">
+                    <span class="chart-subtitle">Critical Unmet Needs by Category</span>
+                    <div class="chart-mini-legend">
+                      <span><span class="legend-block legend-total"></span> Total</span>
+                      <span><span class="legend-block legend-status"></span> Status</span>
+                    </div>
+                  </div>
+
+                  <!-- Custom High-Contrast HTML/CSS Bar Chart -->
+                  <div class="bar-chart-container">
+                    <div class="chart-y-axis">
+                      <span>10,000</span>
+                      <span>8,000</span>
+                      <span>6,000</span>
+                      <span>4,000</span>
+                      <span>2,000</span>
+                      <span>0</span>
+                    </div>
+                    <div class="chart-plot-area" id="bar-chart-plot">
+                      <!-- Dynamic Bars will be rendered here -->
+                    </div>
+                  </div>
+
+                  <!-- X Axis Category Labels -->
+                  <div class="chart-x-labels">
+                    <span class="chart-x-label">Water</span>
+                    <span class="chart-x-label">Food</span>
+                    <span class="chart-x-label">Medical</span>
+                    <span class="chart-x-label">Shelter</span>
+                  </div>
+                </div>
+
+                <!-- Panel 4: Teams & Mesh Connectivity Status -->
+                <div class="cc-panel" id="panel-units" role="tabpanel" style="display:none;">
+                  <!-- Volunteer Leaderboard -->
+                  <div class="leaderboard-section">
+                    <div class="section-title-sm">Volunteer & NGO Leaderboard</div>
+                    <div class="leaderboard-list" id="leaderboard-list">
+                      <!-- Leaderboard loaded dynamically -->
+                    </div>
+                  </div>
+
+                  <!-- Connectivity Telemetry -->
+                  <div class="connectivity-section" style="margin-top:14px;border-top:1px solid var(--border-subtle);padding-top:12px;">
+                    <div class="section-title-sm">NGO & Government Edge Mesh</div>
+                    <div class="status-row">
+                      <span style="color:var(--text-secondary);font-weight:600;">NGO Devices:</span>
+                      <span id="conn-ngo-devices" style="font-weight:700;color:var(--text-primary);">42 Connected (3 via LoRa Mesh)</span>
+                    </div>
+                    <div class="status-row">
+                      <span style="color:var(--text-secondary);font-weight:600;">Gov Hubs:</span>
+                      <span class="status-badge-online" id="conn-gov-hubs">18 Online</span>
+                    </div>
+                    <div class="status-row">
+                      <span style="color:var(--text-secondary);font-weight:600;">Edge Nodes:</span>
+                      <span class="status-badge-online" id="conn-edge-nodes">9/9 Active</span>
+                    </div>
+                    <div class="sync-central-row">
+                      <span class="spin-icon">🔄</span>
+                      <span id="conn-sync-text">Syncing with Central Server</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -598,6 +616,324 @@
             <button type="submit" class="btn-primary" style="width:auto;">Save Changes</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Modal 3: Notifications & System Alerts -->
+    <div class="modal-backdrop hidden" id="notifications-modal" role="dialog" aria-modal="true" aria-labelledby="notif-modal-title">
+      <div class="modal-dialog" style="max-width: 480px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span style="font-size:20px;">🔔</span>
+            <span class="modal-title" id="notif-modal-title">Operational Alerts & Feed</span>
+          </div>
+          <button class="modal-close" id="btn-close-notif-modal" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body" id="notif-list-container">
+          <div class="feed-item" style="border-left: 3px solid #dc2626; padding: 10px;">
+            <div class="feed-left">
+              <span style="font-size:18px;">⚠️</span>
+              <div>
+                <div style="font-weight:700;font-size:12.5px;color:#dc2626;">Critical Underserved Alert - Sector D-12</div>
+                <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                  Severe clean water deficit reported by field reconnaissance unit. 450 residents in urgent need.
+                </div>
+                <div style="font-size:10.5px;color:var(--text-muted);margin-top:4px;">3 minutes ago • Priority 1</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="feed-item" style="border-left: 3px solid #2563eb; padding: 10px;">
+            <div class="feed-left">
+              <span style="font-size:18px;">👥</span>
+              <div>
+                <div style="font-weight:700;font-size:12.5px;color:#2563eb;">Rescue Operation Success</div>
+                <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                  World Aid Org squad successfully evacuated 8 survivors from perimeter. Transported to AIIMS hub.
+                </div>
+                <div style="font-size:10.5px;color:var(--text-muted);margin-top:4px;">14 minutes ago • Logged</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="feed-item" style="border-left: 3px solid #16a34a; padding: 10px;">
+            <div class="feed-left">
+              <span style="font-size:18px;">📡</span>
+              <div>
+                <div style="font-weight:700;font-size:12.5px;color:#16a34a;">LoRa Mesh Relay Connected</div>
+                <div style="font-size:11.5px;color:var(--text-secondary);margin-top:2px;">
+                  Edge Node #9 established decentralized ad-hoc communication with 3 battery-backed relay beacons.
+                </div>
+                <div style="font-size:10.5px;color:var(--text-muted);margin-top:4px;">28 minutes ago • Telemetry Active</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btn-clear-notifs">Clear All</button>
+          <button type="button" class="btn-primary" id="btn-close-notif-action" style="width:auto;">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 4: User Profile & Agency Switcher -->
+    <div class="modal-backdrop hidden" id="user-profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+      <div class="modal-dialog" style="max-width: 460px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span style="font-size:20px;">👤</span>
+            <span class="modal-title" id="profile-modal-title">Operator Profile</span>
+          </div>
+          <button class="modal-close" id="btn-close-profile-modal" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div style="display:flex;align-items:center;gap:14px;padding-bottom:12px;border-bottom:1px solid var(--border-subtle);">
+            <div style="width:50px;height:50px;border-radius:50%;background:#e0e7ff;color:#3730a3;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;">
+              SC
+            </div>
+            <div>
+              <div style="font-size:15px;font-weight:700;color:var(--text-primary);" id="profile-operator-name">Sarah Chen</div>
+              <div style="font-size:12px;color:var(--text-secondary);" id="profile-operator-role">Field Incident Commander</div>
+              <div style="font-size:11px;color:#2563eb;font-weight:600;margin-top:2px;">Authorized First Responder</div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:12px;">
+            <div class="status-row">
+              <span style="color:var(--text-secondary);font-weight:600;">Organization:</span>
+              <span id="profile-org-val" style="font-weight:700;color:var(--text-primary);">World Aid Org [NGO]</span>
+            </div>
+            <div class="status-row">
+              <span style="color:var(--text-secondary);font-weight:600;">Edge Station ID:</span>
+              <span style="font-family:monospace;font-weight:600;">NODE-09-DELHI-NCR</span>
+            </div>
+            <div class="status-row">
+              <span style="color:var(--text-secondary);font-weight:600;">Comms Channel:</span>
+              <span class="status-badge-online">868 MHz LoRa (Ch 4)</span>
+            </div>
+            <div class="status-row">
+              <span style="color:var(--text-secondary);font-weight:600;">Security Level:</span>
+              <span style="font-weight:700;color:#16a34a;">Tier-1 Emergency Responder</span>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top:8px;">
+            <label class="form-label" for="select-profile-role">Quick Role Switcher</label>
+            <select class="form-select" id="select-profile-role">
+              <option value="World Aid Org [NGO]|Sarah Chen|Field Incident Commander">World Aid Org [NGO] • Sarah Chen (Field Lead)</option>
+              <option value="Gov Disaster Mgmt|Rajesh Kumar|Gov Liaison Officer">Gov Disaster Mgmt • Rajesh Kumar (Gov Liaison)</option>
+              <option value="Red Cross|Ananya Sharma|Medical Coordinator">Red Cross • Ananya Sharma (Medical Coordinator)</option>
+              <option value="LocalVol|Vikram Singh|Volunteer Squad Leader">LocalVol • Vikram Singh (Volunteer Leader)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btn-close-profile-action">Cancel</button>
+          <button type="button" class="btn-primary" id="btn-save-profile" style="width:auto;">Switch Identity</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 5: Field Units & First Responders -->
+    <div class="modal-backdrop hidden" id="responders-modal" role="dialog" aria-modal="true" aria-labelledby="resp-modal-title">
+      <div class="modal-dialog" style="max-width: 540px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span style="font-size:20px;">👥</span>
+            <span class="modal-title" id="resp-modal-title">Active Field Response Units</span>
+          </div>
+          <button class="modal-close" id="btn-close-resp-modal" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body" style="max-height: 60vh;">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">
+            Live telemetry from deployed search, medical, and relief teams:
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="feed-item" style="padding:10px;">
+              <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                <div>
+                  <div style="font-weight:700;font-size:13px;color:var(--text-primary);">Alpha Search Team (6 Responders)</div>
+                  <div style="font-size:11px;color:var(--text-muted);">Assigned to Sector B-4 (Perimeter) • Comms Ch 1</div>
+                </div>
+                <span class="status-badge-online">On Mission</span>
+              </div>
+            </div>
+
+            <div class="feed-item" style="padding:10px;">
+              <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                <div>
+                  <div style="font-weight:700;font-size:13px;color:var(--text-primary);">Bravo Medical Triage (8 Medics)</div>
+                  <div style="font-size:11px;color:var(--text-muted);">Stationed at AIIMS Central Sector Hub • Comms Ch 2</div>
+                </div>
+                <span class="status-badge-online">Active Triage</span>
+              </div>
+            </div>
+
+            <div class="feed-item" style="padding:10px;">
+              <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                <div>
+                  <div style="font-weight:700;font-size:13px;color:var(--text-primary);">Charlie Water Tanker Convoy</div>
+                  <div style="font-size:11px;color:var(--text-muted);">En route to Sector D-12 (Old Ward) • Comms Ch 3</div>
+                </div>
+                <span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">In Transit</span>
+              </div>
+            </div>
+
+            <div class="feed-item" style="padding:10px;">
+              <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                <div>
+                  <div style="font-weight:700;font-size:13px;color:var(--text-primary);">Delta Aerial Recon Drone #2</div>
+                  <div style="font-size:11px;color:var(--text-muted);">Autonomous floodway survey • Battery 84%</div>
+                </div>
+                <span class="status-badge-online">Airborne</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btn-close-resp-action">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 6: Audit Log & Mesh Packets -->
+    <div class="modal-backdrop hidden" id="audit-log-modal" role="dialog" aria-modal="true" aria-labelledby="audit-modal-title">
+      <div class="modal-dialog" style="max-width: 560px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span style="font-size:20px;">📋</span>
+            <span class="modal-title" id="audit-modal-title">Edge Audit Log & Packet Ledger</span>
+          </div>
+          <button class="modal-close" id="btn-close-audit-modal" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body" style="font-family:monospace;font-size:11.5px;max-height:60vh;">
+          <div style="background:#0f172a;color:#38bdf8;padding:12px;border-radius:6px;line-height:1.6;overflow-x:auto;">
+            <div>[SYS] Edge Node 09 initialized: DB v1.4 loaded</div>
+            <div>[LORA] RX packet 0x8F4A: Sector B-4 report validated</div>
+            <div>[GEO] Coordinates synced: India Regional Command Grid</div>
+            <div>[RELAY] Syncing 5 reports with central government repository...</div>
+            <div>[HASH] SHA-256 Ledger Block #4811 validated (0 discrepancies)</div>
+            <div>[PWR] Node operating at 12.4V (Solar backed)</div>
+            <div>[NET] Offline mesh buffer: 0 unsent packets (clean state)</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btn-export-log">Export JSON Log</button>
+          <button type="button" class="btn-primary" id="btn-close-audit-action" style="width:auto;">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 7: System Settings -->
+    <div class="modal-backdrop hidden" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+      <div class="modal-dialog" style="max-width: 500px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span style="font-size:20px;">⚙️</span>
+            <span class="modal-title" id="settings-modal-title">Platform & Edge Settings</span>
+          </div>
+          <button class="modal-close" id="btn-close-settings-modal" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="setting-refresh-rate">Auto-Sync Polling Interval</label>
+            <select class="form-select" id="setting-refresh-rate">
+              <option value="5000">5 seconds (High frequency field ops)</option>
+              <option value="10000" selected>10 seconds (Standard recommended)</option>
+              <option value="30000">30 seconds (Power saving mode)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="setting-lora-freq">LoRa Mesh Band</label>
+            <select class="form-select" id="setting-lora-freq">
+              <option value="868">868 MHz (India / Europe)</option>
+              <option value="915">915 MHz (Americas / Australia)</option>
+              <option value="433">433 MHz (Auxiliary UHF)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="custom-checkbox" style="font-weight:600;font-size:12.5px;">
+              <input type="checkbox" id="setting-audio-alerts" checked />
+              <span>Enable Audio Beep on Critical Alerts</span>
+            </label>
+          </div>
+
+          <div style="border-top:1px solid var(--border-subtle);padding-top:12px;margin-top:6px;">
+            <label class="form-label" style="color:#dc2626;">Danger Zone</label>
+            <button type="button" class="btn-secondary" id="btn-reset-db" style="color:#dc2626;border-color:#fca5a5;width:100%;text-align:center;">
+              🗑️ Reset Local Database & Clear Cache
+            </button>
+            <p style="font-size:10.5px;color:var(--text-muted);margin-top:4px;">
+              Restores initial mock disaster datasets and re-centers on default regional coordinates.
+            </p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btn-close-settings-action">Cancel</button>
+          <button type="button" class="btn-primary" id="btn-save-settings" style="width:auto;">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 8: Organizations Directory -->
+    <div class="modal-backdrop hidden" id="orgs-modal" role="dialog" aria-modal="true" aria-labelledby="orgs-modal-title">
+      <div class="modal-dialog" style="max-width: 520px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span style="font-size:20px;">🏢</span>
+            <span class="modal-title" id="orgs-modal-title">Participating Organizations</span>
+          </div>
+          <button class="modal-close" id="btn-close-orgs-modal" aria-label="Close modal">&times;</button>
+        </div>
+        <div class="modal-body" style="max-height:60vh;">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="feed-item" style="padding:10px;">
+              <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                <div>
+                  <div style="font-weight:700;font-size:13px;color:var(--text-primary);">World Aid Org [NGO]</div>
+                  <div style="font-size:11px;color:var(--text-muted);">Focus: Survivor Search & Evacuation • 8,450 pts</div>
+                </div>
+                <span class="status-badge-online">Verified NGO</span>
+              </div>
+            </div>
+
+            <div class="feed-item" style="padding:10px;">
+              <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                <div>
+                  <div style="font-weight:700;font-size:13px;color:var(--text-primary);">Red Cross / Red Crescent</div>
+                  <div style="font-size:11px;color:var(--text-muted);">Focus: Clean Potable Water Logistics • 7,210 pts</div>
+                </div>
+                <span class="status-badge-online">Verified NGO</span>
+              </div>
+            </div>
+
+            <div class="feed-item" style="padding:10px;">
+              <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                <div>
+                  <div style="font-weight:700;font-size:13px;color:var(--text-primary);">UN Relief & Disaster Taskforce</div>
+                  <div style="font-size:11px;color:var(--text-muted);">Focus: Medical Field Triage Stations • 5,900 pts</div>
+                </div>
+                <span class="status-badge-online">Inter-Gov</span>
+              </div>
+            </div>
+
+            <div class="feed-item" style="padding:10px;">
+              <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                <div>
+                  <div style="font-weight:700;font-size:13px;color:var(--text-primary);">National Disaster Management Authority (Gov)</div>
+                  <div style="font-size:11px;color:var(--text-muted);">Focus: Regional Command & Resource Allocation</div>
+                </div>
+                <span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">Government</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btn-close-orgs-action">Close</button>
+        </div>
       </div>
     </div>
 

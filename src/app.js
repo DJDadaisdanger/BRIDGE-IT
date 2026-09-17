@@ -900,68 +900,75 @@ const MapModule = {
    Location & Geolocation Module (GPS + IP Fallback + Test Data Generation)
    -------------------------------------------------------------------------- */
 const LocationModule = {
-  detectLocation(silent = false) {
+  async detectLocation(silent = false) {
     const btn = document.getElementById('btn-detect-gps');
+    const chip = document.getElementById('chip-detect-gps');
     if (btn) {
       btn.classList.add('locating');
-      btn.innerHTML = '<span>📡</span> <span>Detecting Location...</span>';
+      btn.innerHTML = '<span>📡</span> <span>Detecting GPS...</span>';
+    }
+    if (chip) {
+      chip.classList.add('locating');
+      chip.textContent = '📡 Detecting...';
     }
 
-    // Check if browser geolocation is available and not restricted
+    let detected = false;
+    const finish = (lat, lng, locationName, isGPS = true) => {
+      if (detected) return;
+      detected = true;
+      this.applyLocation(lat, lng, locationName, isGPS);
+    };
+
+    // Parallel Server Lookup: backend /api/my-location resolves IP reliably without client CORS limits
+    const serverLookupPromise = fetch('/api/my-location')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.success && data.lat && data.lng) {
+          return data;
+        }
+        return null;
+      })
+      .catch(() => null);
+
+    // Try browser GPS if available
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
-          this.applyLocation(lat, lng, 'Your GPS Location', true);
+          finish(lat, lng, 'Your GPS Location', true);
         },
-        (err) => {
-          console.warn('Browser GPS declined or unavailable in iframe. Trying IP geolocation fallback...', err.message);
-          this.fallbackToIPGeolocation(silent);
+        async (err) => {
+          console.warn('Browser GPS permission declined or restricted. Falling back to network IP resolution...', err.message);
+          const serverGeo = await serverLookupPromise;
+          if (serverGeo) {
+            finish(serverGeo.lat, serverGeo.lng, serverGeo.name || `${serverGeo.city}, ${serverGeo.country}`, false);
+          } else {
+            finish(28.6139, 77.2090, 'India Command Hub (NCR)', false);
+          }
         },
-        { enableHighAccuracy: false, timeout: 7000, maximumAge: 60000 }
+        { enableHighAccuracy: false, timeout: 3500, maximumAge: 60000 }
       );
     } else {
-      this.fallbackToIPGeolocation(silent);
+      const serverGeo = await serverLookupPromise;
+      if (serverGeo) {
+        finish(serverGeo.lat, serverGeo.lng, serverGeo.name || `${serverGeo.city}, ${serverGeo.country}`, false);
+      } else {
+        finish(28.6139, 77.2090, 'India Command Hub (NCR)', false);
+      }
     }
-  },
 
-  async fallbackToIPGeolocation(silent = false) {
-    try {
-      // Free HTTPS IP geolocation services that work in iframes without asking permissions
-      const res = await fetch('https://ipapi.co/json/');
-      if (res.ok) {
-        const json = await res.json();
-        if (json.latitude && json.longitude) {
-          const cityName = json.city ? `${json.city} (${json.country_name || 'Your Area'})` : 'Your Network Area';
-          this.applyLocation(json.latitude, json.longitude, cityName, false);
-          return;
+    // Timeout safety fallback: ensure it never hangs more than 3.5 seconds
+    setTimeout(async () => {
+      if (!detected) {
+        const serverGeo = await serverLookupPromise;
+        if (serverGeo) {
+          finish(serverGeo.lat, serverGeo.lng, serverGeo.name || `${serverGeo.city}, ${serverGeo.country}`, false);
+        } else {
+          finish(28.6139, 77.2090, 'India Command Hub (NCR)', false);
         }
       }
-    } catch (e) {
-      console.warn('Primary IP geolocation failed, trying secondary...', e);
-    }
-
-    // Secondary IP fallback
-    try {
-      const res2 = await fetch('https://ipwho.is/');
-      if (res2.ok) {
-        const json2 = await res2.json();
-        if (json2.latitude && json2.longitude) {
-          const cityName = json2.city ? `${json2.city} (${json2.country || 'Area'})` : 'Your Region';
-          this.applyLocation(json2.latitude, json2.longitude, cityName, false);
-          return;
-        }
-      }
-    } catch (e2) {
-      console.warn('IP geolocation secondary failed:', e2);
-    }
-
-    // If both GPS and IP fail (e.g. offline sandbox), default to India
-    this.resetBtn();
-    if (!silent) {
-      UI.showToast('Could not access live coordinates; defaulted to India Command Hub.');
-    }
+    }, 3500);
   },
 
   applyLocation(lat, lng, locationName, isGPS = true) {
@@ -969,7 +976,7 @@ const LocationModule = {
     BridgeIt.currentCenter = [lat, lng];
     BridgeIt.currentRegionName = locationName;
 
-    // Generate sample data around this location so the map and feeds immediately display test points
+    // Generate sample data around this location so the map and feeds immediately display real test points
     DB.generateSampleDataAround(lat, lng, locationName);
 
     if (BridgeIt.map) {
@@ -987,8 +994,24 @@ const LocationModule = {
     const titleEl = document.getElementById('zone-title');
     if (titleEl) titleEl.textContent = `Active Disaster Zone (${locationName})`;
 
+    const zoneBadge = document.getElementById('quick-zone-badge');
+    if (zoneBadge) zoneBadge.textContent = `📍 Active: ${locationName}`;
+
+    // Synchronize select dropdown
+    const select = document.getElementById('region-select');
+    if (select) {
+      if (locationName.includes('Delhi')) select.value = 'india-delhi';
+      else if (locationName.includes('Mumbai')) select.value = 'india-mumbai';
+      else if (locationName.includes('Bengaluru')) select.value = 'india-bengaluru';
+      else if (locationName.includes('Kolkata')) select.value = 'india-kolkata';
+      else if (locationName.includes('Chennai')) select.value = 'india-chennai';
+      else if (locationName.includes('Hyderabad')) select.value = 'india-hyderabad';
+      else if (locationName.includes('Pune')) select.value = 'india-pune';
+      else select.value = 'gps';
+    }
+
     this.resetBtn();
-    UI.showToast(`Centered on ${locationName} (${lat.toFixed(2)}°, ${lng.toFixed(2)}°) with test sample data!`);
+    UI.showToast(`Centered on ${locationName} (${lat.toFixed(2)}°, ${lng.toFixed(2)}°)`);
   },
 
   setRegionPreset(presetKey) {
@@ -1021,7 +1044,12 @@ const LocationModule = {
     const btn = document.getElementById('btn-detect-gps');
     if (btn) {
       btn.classList.remove('locating');
-      btn.innerHTML = '<span>📍</span> <span>Detect My Location (GPS / IP)</span>';
+      btn.innerHTML = '<span>📍</span> <span>Detect My GPS Location</span>';
+    }
+    const chip = document.getElementById('chip-detect-gps');
+    if (chip) {
+      chip.classList.remove('locating');
+      chip.textContent = '📍 Detect GPS';
     }
   },
 };
@@ -1033,11 +1061,11 @@ const SyncEngine = {
   start() {
     if (BridgeIt.autoRefreshTimer) clearInterval(BridgeIt.autoRefreshTimer);
 
-    // Auto-refresh interval every 10 seconds
+    const interval = BridgeIt.autoRefreshInterval || 10000;
     BridgeIt.autoRefreshTimer = setInterval(() => {
       if (!BridgeIt.autoRefreshEnabled) return;
       this.tick();
-    }, 10000);
+    }, interval);
   },
 
   async tick() {
@@ -1101,10 +1129,30 @@ const SyncEngine = {
 };
 
 /* --------------------------------------------------------------------------
-   Event Handlers & User Interactions
+   Event Handlers & User Interactions (Making all buttons functional)
    -------------------------------------------------------------------------- */
 function setupEventHandlers() {
-  // Modal: Add Report
+  // --- Helper to open/close modals cleanly ---
+  const toggleModal = (modalId, show) => {
+    const el = document.getElementById(modalId);
+    if (!el) return;
+    if (show) {
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
+  };
+
+  // Close modals when clicking backdrop
+  document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) {
+        backdrop.classList.add('hidden');
+      }
+    });
+  });
+
+  // --- Modal 1: Add New Report ---
   const modalAdd = document.getElementById('report-modal');
   const btnOpenModal = document.getElementById('btn-open-report-modal');
   const btnCloseModal = document.getElementById('btn-close-modal');
@@ -1129,35 +1177,17 @@ function setupEventHandlers() {
   if (btnCloseModal) btnCloseModal.addEventListener('click', closeAddModal);
   if (btnCancelModal) btnCancelModal.addEventListener('click', closeAddModal);
 
-  // Modal: Edit Report
-  const modalEdit = document.getElementById('edit-report-modal');
-  const btnCloseEditModal = document.getElementById('btn-close-edit-modal');
-  const btnCancelEditModal = document.getElementById('btn-cancel-edit-modal');
-  const formEditReport = document.getElementById('form-edit-report');
-
-  if (btnCloseEditModal) btnCloseEditModal.addEventListener('click', () => UI.closeEditModal());
-  if (btnCancelEditModal) btnCancelEditModal.addEventListener('click', () => UI.closeEditModal());
-
-  if (modalEdit) {
-    modalEdit.addEventListener('click', (e) => {
-      if (e.target === modalEdit) UI.closeEditModal();
-    });
-  }
-
-  // Handle Edit Form Submission (CRUD: Update)
-  if (formEditReport) {
-    formEditReport.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = document.getElementById('edit-report-id').value;
-      const title = document.getElementById('edit-report-title').value;
-      const sector = document.getElementById('edit-report-sector').value;
-      const qty = document.getElementById('edit-report-qty').value;
-      const type = document.getElementById('edit-report-type').value;
-
-      await DB.updateReport(id, { title, sector, qty, type });
-      UI.closeEditModal();
-      UI.refreshAll();
-      UI.showToast(`Report updated: "${title}"`);
+  // Quick Use Live GPS in Report Modal
+  const btnFillCoordsGps = document.getElementById('btn-modal-use-gps');
+  if (btnFillCoordsGps) {
+    btnFillCoordsGps.addEventListener('click', () => {
+      if (BridgeIt.userCoords) {
+        document.getElementById('report-lat').value = BridgeIt.userCoords.lat.toFixed(4);
+        document.getElementById('report-lng').value = BridgeIt.userCoords.lng.toFixed(4);
+        UI.showToast('Filled coordinates from your live location!');
+      } else {
+        LocationModule.detectLocation(false);
+      }
     });
   }
 
@@ -1184,44 +1214,270 @@ function setupEventHandlers() {
     });
   }
 
-  // Quick Use Live GPS in Report Modal
-  const btnFillCoordsGps = document.getElementById('btn-modal-use-gps');
-  if (btnFillCoordsGps) {
-    btnFillCoordsGps.addEventListener('click', () => {
-      if (BridgeIt.userCoords) {
-        document.getElementById('report-lat').value = BridgeIt.userCoords.lat.toFixed(4);
-        document.getElementById('report-lng').value = BridgeIt.userCoords.lng.toFixed(4);
-        UI.showToast('Filled coordinates from your live location!');
-      } else {
-        LocationModule.detectLocation(false);
-      }
+  // --- Modal 2: Edit Report ---
+  const btnCloseEditModal = document.getElementById('btn-close-edit-modal');
+  const btnCancelEditModal = document.getElementById('btn-cancel-edit-modal');
+  const formEditReport = document.getElementById('form-edit-report');
+
+  if (btnCloseEditModal) btnCloseEditModal.addEventListener('click', () => UI.closeEditModal());
+  if (btnCancelEditModal) btnCancelEditModal.addEventListener('click', () => UI.closeEditModal());
+
+  // Handle Edit Form Submission (CRUD: Update)
+  if (formEditReport) {
+    formEditReport.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-report-id').value;
+      const title = document.getElementById('edit-report-title').value;
+      const sector = document.getElementById('edit-report-sector').value;
+      const qty = document.getElementById('edit-report-qty').value;
+      const type = document.getElementById('edit-report-type').value;
+
+      await DB.updateReport(id, { title, sector, qty, type });
+      UI.closeEditModal();
+      UI.refreshAll();
+      UI.showToast(`Report updated: "${title}"`);
     });
   }
 
-  // Location / GPS Detection Button
+  // --- Modal 3: Notifications Modal ---
+  const btnNotifs = document.getElementById('btn-notifications');
+  const btnCloseNotif = document.getElementById('btn-close-notif-modal');
+  const btnCloseNotifAct = document.getElementById('btn-close-notif-action');
+  const btnClearNotifs = document.getElementById('btn-clear-notifs');
+
+  if (btnNotifs) btnNotifs.addEventListener('click', () => toggleModal('notifications-modal', true));
+  if (btnCloseNotif) btnCloseNotif.addEventListener('click', () => toggleModal('notifications-modal', false));
+  if (btnCloseNotifAct) btnCloseNotifAct.addEventListener('click', () => toggleModal('notifications-modal', false));
+
+  if (btnClearNotifs) {
+    btnClearNotifs.addEventListener('click', () => {
+      const container = document.getElementById('notif-list-container');
+      if (container) {
+        container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">No active alerts. All items marked as resolved.</div>';
+      }
+      const badge = document.querySelector('.notification-badge');
+      if (badge) badge.style.display = 'none';
+      UI.showToast('All notifications cleared.');
+    });
+  }
+
+  // --- Modal 4: Operator Profile Modal & Role Switcher ---
+  const btnUserProfile = document.getElementById('btn-user-profile');
+  const userNameBadge = document.querySelector('.user-name-badge');
+  const btnCloseProfile = document.getElementById('btn-close-profile-modal');
+  const btnCloseProfileAct = document.getElementById('btn-close-profile-action');
+  const btnSaveProfile = document.getElementById('btn-save-profile');
+  const selectRole = document.getElementById('select-profile-role');
+
+  const openProfile = () => toggleModal('user-profile-modal', true);
+  if (btnUserProfile) btnUserProfile.addEventListener('click', openProfile);
+  if (userNameBadge) {
+    userNameBadge.style.cursor = 'pointer';
+    userNameBadge.addEventListener('click', openProfile);
+  }
+  if (btnCloseProfile) btnCloseProfile.addEventListener('click', () => toggleModal('user-profile-modal', false));
+  if (btnCloseProfileAct) btnCloseProfileAct.addEventListener('click', () => toggleModal('user-profile-modal', false));
+
+  if (btnSaveProfile && selectRole) {
+    btnSaveProfile.addEventListener('click', () => {
+      const [org, name, role] = selectRole.value.split('|');
+      const nameBadge = document.querySelector('.user-name-badge');
+      const orgBadge = document.querySelector('.user-org-badge');
+      const profileName = document.getElementById('profile-operator-name');
+      const profileRole = document.getElementById('profile-operator-role');
+      const profileOrgVal = document.getElementById('profile-org-val');
+
+      if (nameBadge) nameBadge.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${name}`;
+      if (orgBadge) orgBadge.textContent = `Logged in as: ${org}`;
+      if (profileName) profileName.textContent = name;
+      if (profileRole) profileRole.textContent = role;
+      if (profileOrgVal) profileOrgVal.textContent = org;
+
+      toggleModal('user-profile-modal', false);
+      UI.showToast(`Switched operator identity to ${name} (${org})`);
+    });
+  }
+
+  // --- Modal 5: Field Units & Responders ---
+  const btnCloseResp = document.getElementById('btn-close-resp-modal');
+  const btnCloseRespAct = document.getElementById('btn-close-resp-action');
+  if (btnCloseResp) btnCloseResp.addEventListener('click', () => toggleModal('responders-modal', false));
+  if (btnCloseRespAct) btnCloseRespAct.addEventListener('click', () => toggleModal('responders-modal', false));
+
+  // --- Modal 6: Audit Log & Ledger ---
+  const btnCloseAudit = document.getElementById('btn-close-audit-modal');
+  const btnCloseAuditAct = document.getElementById('btn-close-audit-action');
+  const btnExportLog = document.getElementById('btn-export-log');
+  if (btnCloseAudit) btnCloseAudit.addEventListener('click', () => toggleModal('audit-log-modal', false));
+  if (btnCloseAuditAct) btnCloseAuditAct.addEventListener('click', () => toggleModal('audit-log-modal', false));
+
+  if (btnExportLog) {
+    btnExportLog.addEventListener('click', () => {
+      const logData = {
+        station: 'NODE-09-DELHI-NCR',
+        exportedAt: new Date().toISOString(),
+        currentRegion: BridgeIt.currentRegionName,
+        center: BridgeIt.currentCenter,
+        data: DB.get(),
+      };
+      const blob = new Blob([JSON.stringify(logData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bridgeit-audit-log-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      UI.showToast('Exported edge audit log to JSON.');
+    });
+  }
+
+  // --- Modal 7: Settings Modal ---
+  const btnCloseSettings = document.getElementById('btn-close-settings-modal');
+  const btnCloseSettingsAct = document.getElementById('btn-close-settings-action');
+  const btnSaveSettings = document.getElementById('btn-save-settings');
+
+  if (btnCloseSettings) btnCloseSettings.addEventListener('click', () => toggleModal('settings-modal', false));
+  if (btnCloseSettingsAct) btnCloseSettingsAct.addEventListener('click', () => toggleModal('settings-modal', false));
+
+  if (btnSaveSettings) {
+    btnSaveSettings.addEventListener('click', () => {
+      const rateSelect = document.getElementById('setting-refresh-rate');
+      if (rateSelect) {
+        BridgeIt.autoRefreshInterval = parseInt(rateSelect.value, 10);
+        SyncEngine.start();
+      }
+      toggleModal('settings-modal', false);
+      UI.showToast(`Saved settings: Auto-sync set to ${BridgeIt.autoRefreshInterval / 1000}s interval.`);
+    });
+  }
+
+  // --- Modal 8: Organizations Directory ---
+  const btnCloseOrgs = document.getElementById('btn-close-orgs-modal');
+  const btnCloseOrgsAct = document.getElementById('btn-close-orgs-action');
+  if (btnCloseOrgs) btnCloseOrgs.addEventListener('click', () => toggleModal('orgs-modal', false));
+  if (btnCloseOrgsAct) btnCloseOrgsAct.addEventListener('click', () => toggleModal('orgs-modal', false));
+
+  // --- Command Center Tab Switching ---
+  const ccTabs = document.querySelectorAll('.cc-tab');
+  const switchCCTab = (targetId) => {
+    ccTabs.forEach((t) => {
+      const isTarget = t.getAttribute('data-target') === targetId;
+      t.classList.toggle('active', isTarget);
+      t.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+    });
+
+    document.querySelectorAll('.cc-panel').forEach((panel) => {
+      panel.style.display = 'none';
+      panel.classList.remove('active');
+    });
+
+    const activePanel = document.getElementById(targetId);
+    if (activePanel) {
+      activePanel.style.display = 'block';
+      activePanel.classList.add('active');
+    }
+
+    if (targetId === 'panel-resources') UI.renderResources();
+    else if (targetId === 'panel-gaps') UI.renderGaps();
+    else if (targetId === 'panel-units') UI.renderLeaderboard();
+  };
+
+  ccTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const targetId = tab.getAttribute('data-target');
+      switchCCTab(targetId);
+    });
+  });
+
+  // --- Quick Location Chips in Emergency Bar ---
+  const chipGps = document.getElementById('chip-detect-gps');
+  if (chipGps) {
+    chipGps.addEventListener('click', () => {
+      document.querySelectorAll('.loc-chip').forEach((c) => c.classList.remove('active'));
+      chipGps.classList.add('active');
+      LocationModule.detectLocation(false);
+    });
+  }
+
+  document.querySelectorAll('.loc-chip[data-preset]').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.loc-chip').forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      const preset = chip.getAttribute('data-preset');
+      LocationModule.setRegionPreset(preset);
+    });
+  });
+
+  // --- Sub-Navigation Tabs ---
+  document.querySelectorAll('.nav-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.nav-tab').forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      const tabName = tab.getAttribute('data-tab');
+      if (tabName === 'Dashboard') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        switchCCTab('panel-feed');
+      } else if (tabName === 'Field Updates') {
+        switchCCTab('panel-feed');
+        const target = document.getElementById('panel-feed');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          target.classList.add('widget-highlight');
+          setTimeout(() => target.classList.remove('widget-highlight'), 1800);
+        }
+      } else if (tabName === 'Resources') {
+        switchCCTab('panel-resources');
+        const target = document.getElementById('panel-resources');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          target.classList.add('widget-highlight');
+          setTimeout(() => target.classList.remove('widget-highlight'), 1800);
+        }
+      } else if (tabName === 'Map View') {
+        const target = document.getElementById('map-container');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (BridgeIt.map) BridgeIt.map.invalidateSize();
+        }
+      } else if (tabName === 'Organizations') {
+        toggleModal('orgs-modal', true);
+      } else if (tabName === 'Reports') {
+        openAddModal();
+      }
+    });
+  });
+
+  // --- Left Rail Buttons ---
+  const railBtns = document.querySelectorAll('.rail-btn');
+  if (railBtns.length >= 4) {
+    // 1. Dashboard
+    railBtns[0].addEventListener('click', () => {
+      railBtns.forEach((b) => b.classList.remove('active'));
+      railBtns[0].classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    // 2. First Responders & Field Units
+    railBtns[1].addEventListener('click', () => {
+      toggleModal('responders-modal', true);
+    });
+    // 3. Audit Log & Incident Reports
+    railBtns[2].addEventListener('click', () => {
+      toggleModal('audit-log-modal', true);
+    });
+    // 4. System Settings
+    railBtns[3].addEventListener('click', () => {
+      toggleModal('settings-modal', true);
+    });
+  }
+
+  // --- Location / GPS Detection Button ---
   const btnDetectGps = document.getElementById('btn-detect-gps');
   if (btnDetectGps) {
     btnDetectGps.addEventListener('click', () => LocationModule.detectLocation(false));
   }
 
-  // Generate Sample Data Here Button
-  const btnGenSampleData = document.getElementById('btn-generate-sample-data');
-  if (btnGenSampleData) {
-    btnGenSampleData.addEventListener('click', () => {
-      const lat = BridgeIt.currentCenter[0];
-      const lng = BridgeIt.currentCenter[1];
-      const name = BridgeIt.currentRegionName || 'Local Area';
-      DB.generateSampleDataAround(lat, lng, name);
-      UI.refreshAll();
-      if (BridgeIt.map) {
-        BridgeIt.map.setView([lat, lng], 13, { animate: true });
-        MapModule.updateLayers();
-      }
-      UI.showToast(`Generated 10 test disaster relief nodes around ${name}!`);
-    });
-  }
-
-  // Operations Hub Region Dropdown
+  // --- Operations Hub Region Dropdown ---
   const regionSelect = document.getElementById('region-select');
   if (regionSelect) {
     regionSelect.addEventListener('change', (e) => {
@@ -1229,7 +1485,7 @@ function setupEventHandlers() {
     });
   }
 
-  // Auto-Sync Toggle
+  // --- Auto-Sync Toggle ---
   const autoSyncBtn = document.getElementById('btn-toggle-auto-sync');
   if (autoSyncBtn) {
     autoSyncBtn.addEventListener('click', () => {
@@ -1246,13 +1502,13 @@ function setupEventHandlers() {
     });
   }
 
-  // Manual Sync Button
+  // --- Manual Sync Button ---
   const btnManualSync = document.getElementById('btn-manual-sync');
   if (btnManualSync) {
     btnManualSync.addEventListener('click', () => SyncEngine.triggerManualSync());
   }
 
-  // Map Filter Checkboxes
+  // --- Map Filter Checkboxes ---
   ['layer-relief', 'layer-gaps', 'layer-rescue'].forEach((id) => {
     const el = document.getElementById(id);
     if (el) {
@@ -1260,22 +1516,153 @@ function setupEventHandlers() {
     }
   });
 
-  // Area Search Filter
-  const areaSearch = document.getElementById('map-area-search');
-  if (areaSearch) {
-    areaSearch.addEventListener('input', (e) => {
-      const term = e.target.value.trim().toLowerCase();
-      if (!term || !BridgeIt.map) return;
-
-      const data = DB.get();
-      const match = data.mapPoints.find((p) => p.label.toLowerCase().includes(term));
-      if (match) {
-        BridgeIt.map.setView([match.lat, match.lng], 15, { animate: true });
-      }
+  // --- Time Slider Dropdown ---
+  const timeFilterSelect = document.getElementById('time-filter-select');
+  if (timeFilterSelect) {
+    timeFilterSelect.addEventListener('change', (e) => {
+      BridgeIt.timeFilter = e.target.value;
+      UI.refreshAll();
+      MapModule.updateLayers();
+      UI.showToast(`Filtered map & feed to: ${e.target.options[e.target.selectedIndex].text}`);
     });
   }
 
-  // Sync Status Toggle
+  // --- Area Search Filter & Search Button ---
+  const areaSearch = document.getElementById('map-area-search');
+  const btnMapSearch = document.getElementById('btn-map-search');
+
+  const executeAreaSearch = () => {
+    if (!areaSearch || !BridgeIt.map) return;
+    const term = areaSearch.value.trim().toLowerCase();
+    if (!term) return;
+
+    // Search existing disaster points first
+    const data = DB.get();
+    const match = data.mapPoints.find((p) => p.label.toLowerCase().includes(term));
+    if (match) {
+      BridgeIt.map.setView([match.lat, match.lng], 15, { animate: true });
+      UI.showToast(`Found sector: "${match.label}"`);
+      return;
+    }
+
+    // Common city / sector coordinates search dictionary
+    const knownLocations = {
+      'delhi': [28.6139, 77.2090],
+      'new delhi': [28.6139, 77.2090],
+      'ncr': [28.6139, 77.2090],
+      'connaught': [28.6315, 77.2167],
+      'karol bagh': [28.6517, 77.1906],
+      'aiims': [28.5672, 77.2100],
+      'mumbai': [19.0760, 72.8777],
+      'bengaluru': [12.9716, 77.5946],
+      'bangalore': [12.9716, 77.5946],
+      'kolkata': [22.5726, 88.3639],
+      'chennai': [13.0827, 80.2707],
+      'hyderabad': [17.3850, 78.4867],
+      'pune': [18.5204, 73.8567],
+      'sector b-4': [28.6180, 77.2120],
+      'sector d-12': [28.6250, 77.2020],
+      'sector a-1': [28.6100, 77.2050],
+    };
+
+    const locKey = Object.keys(knownLocations).find((k) => term.includes(k) || k.includes(term));
+    if (locKey) {
+      const coords = knownLocations[locKey];
+      BridgeIt.map.setView(coords, 14, { animate: true });
+      UI.showToast(`Navigated to: ${locKey.toUpperCase()} (${coords[0].toFixed(2)}, ${coords[1].toFixed(2)})`);
+    } else {
+      UI.showToast(`No exact grid match for "${term}". Showing nearest active nodes.`);
+    }
+  };
+
+  if (areaSearch) {
+    areaSearch.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        executeAreaSearch();
+      }
+    });
+    areaSearch.addEventListener('input', (e) => {
+      const term = e.target.value.trim().toLowerCase();
+      if (term.length >= 3) executeAreaSearch();
+    });
+  }
+
+  if (btnMapSearch) {
+    btnMapSearch.addEventListener('click', executeAreaSearch);
+  }
+
+  // --- Quick Action Buttons in Widget 4 ---
+  const btnQuickRescue = document.getElementById('btn-quick-rescue');
+  const btnQuickFood = document.getElementById('btn-quick-food');
+  const btnQuickWater = document.getElementById('btn-quick-water');
+  const btnQuickAlert = document.getElementById('btn-quick-alert');
+
+  if (btnQuickRescue) {
+    btnQuickRescue.addEventListener('click', async () => {
+      await DB.addReport({
+        type: 'rescue',
+        org: 'World Aid Org [NGO]',
+        sector: `${BridgeIt.currentRegionName || 'NCR'} Perimeter`,
+        title: 'Emergency Extraction: 8 Survivors Rescued',
+        qty: '8',
+        lat: BridgeIt.currentCenter[0] + (Math.random() - 0.5) * 0.01,
+        lng: BridgeIt.currentCenter[1] + (Math.random() - 0.5) * 0.01,
+      });
+      UI.refreshAll();
+      UI.showToast('Logged: 8 Survivors Rescued! (+8 to KPI tally)');
+    });
+  }
+
+  if (btnQuickFood) {
+    btnQuickFood.addEventListener('click', async () => {
+      await DB.addReport({
+        type: 'food',
+        org: 'World Aid Org [NGO]',
+        sector: `${BridgeIt.currentRegionName || 'NCR'} Depot`,
+        title: 'Ration Pack Drop: 25 Kits Distributed',
+        qty: '25',
+        lat: BridgeIt.currentCenter[0] + (Math.random() - 0.5) * 0.01,
+        lng: BridgeIt.currentCenter[1] + (Math.random() - 0.5) * 0.01,
+      });
+      UI.refreshAll();
+      UI.showToast('Logged: 25 Food Kits Distributed.');
+    });
+  }
+
+  if (btnQuickWater) {
+    btnQuickWater.addEventListener('click', async () => {
+      await DB.addReport({
+        type: 'water',
+        org: 'Red Cross / Red Crescent',
+        sector: `${BridgeIt.currentRegionName || 'NCR'} Sector 7`,
+        title: 'Water Tanker Relief: 250 Gallons Potable Supply',
+        qty: '250',
+        lat: BridgeIt.currentCenter[0] + (Math.random() - 0.5) * 0.01,
+        lng: BridgeIt.currentCenter[1] + (Math.random() - 0.5) * 0.01,
+      });
+      UI.refreshAll();
+      UI.showToast('Logged: 250 Gal Potable Water Dispensed.');
+    });
+  }
+
+  if (btnQuickAlert) {
+    btnQuickAlert.addEventListener('click', async () => {
+      await DB.addReport({
+        type: 'underserved',
+        org: 'Gov Recon Team',
+        sector: `${BridgeIt.currentRegionName || 'NCR'} Outskirts`,
+        title: 'Critical Resource Gap: Urgent Supplies Needed',
+        qty: '1',
+        lat: BridgeIt.currentCenter[0] + (Math.random() - 0.5) * 0.01,
+        lng: BridgeIt.currentCenter[1] + (Math.random() - 0.5) * 0.01,
+      });
+      UI.refreshAll();
+      UI.showToast('Broadcasted Priority Gap Alert across regional mesh!');
+    });
+  }
+
+  // --- Sync Status Toggle ---
   const syncPill = document.getElementById('sync-status-pill');
   if (syncPill) {
     syncPill.addEventListener('click', () => {
@@ -1294,11 +1681,12 @@ function setupEventHandlers() {
     });
   }
 
-  // Reset database button
+  // --- Reset database button ---
   const btnReset = document.getElementById('btn-reset-db');
   if (btnReset) {
     btnReset.addEventListener('click', () => {
       if (confirm('Reset database to initial disaster operations data?')) {
+        toggleModal('settings-modal', false);
         DB.resetToDefaults();
       }
     });

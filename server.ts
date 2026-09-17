@@ -288,6 +288,59 @@ app.delete('/api/reports/:id', (req, res) => {
   }
 });
 
+// GET user network geolocation without browser CORS restrictions
+app.get('/api/my-location', async (req, res) => {
+  try {
+    const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+    const ip = (Array.isArray(rawIp) ? rawIp[0] : String(rawIp).split(',')[0]).trim();
+
+    let geo: any = null;
+    if (ip && ip !== '127.0.0.1' && ip !== '::1' && !ip.startsWith('10.') && !ip.startsWith('192.168.')) {
+      try {
+        const fetchRes = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,regionName,city,lat,lon`);
+        if (fetchRes.ok) {
+          const data = (await fetchRes.json()) as any;
+          if (data && data.status === 'success' && data.lat && data.lon) {
+            geo = {
+              lat: data.lat,
+              lng: data.lon,
+              city: data.city || 'Your Area',
+              region: data.regionName || '',
+              country: data.country || 'India',
+              name: `${data.city || 'Active Zone'}, ${data.country || 'India'}`,
+            };
+          }
+        }
+      } catch (e) {
+        console.warn('Server IP geo lookup error:', e);
+      }
+    }
+
+    if (!geo) {
+      geo = {
+        lat: 28.6139,
+        lng: 77.2090,
+        city: 'New Delhi',
+        region: 'NCR',
+        country: 'India',
+        name: 'India - New Delhi (NCR)',
+      };
+    }
+
+    res.json({ success: true, ...geo });
+  } catch (err: any) {
+    res.json({
+      success: true,
+      lat: 28.6139,
+      lng: 77.2090,
+      city: 'New Delhi',
+      region: 'NCR',
+      country: 'India',
+      name: 'India - New Delhi (NCR)',
+    });
+  }
+});
+
 // Relocate Disaster Zone (e.g. When user provides coordinates or India GPS)
 app.post('/api/relocate', (req, res) => {
   try {
