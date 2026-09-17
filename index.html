@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BridgeIt - Disaster Relief Coordination</title>
+    <meta name="description" content="Edge-computing disaster relief coordination platform with geotagged heat maps, real-time field feeds, resource tracking, and local storage database." />
+    <meta property="og:title" content="BridgeIt - Disaster Relief Coordination" />
+    <meta property="og:description" content="Edge-computing disaster relief coordination platform with geotagged heat maps, real-time field feeds, resource tracking, and local storage database." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Leaflet.js CDN for lightweight, high-performance interactive maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+    <!-- Custom High-Contrast Light Theme Stylesheet (Vanilla CSS, No Tailwind/Bootstrap) -->
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- Top Navigation Header -->
+    <header class="top-nav" id="top-nav">
+      <div class="brand-wrapper">
+        <div class="brand-logo-badge" title="BridgeIt Edge Platform">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 18V9c0-1.1.9-2 2-2h12a2 2 0 0 1 2 2v9"/>
+            <path d="M4 14h16"/>
+            <path d="M8 14v4"/>
+            <path d="M16 14v4"/>
+            <path d="M2 18h20"/>
+          </svg>
+        </div>
+        <div class="brand-title-group">
+          <span class="brand-title">BRIDGEIT</span>
+          <span class="brand-subtitle">DISASTER RELIEF COORDINATION (Central Dashboard)</span>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <!-- Auto-Sync Toggle Pill -->
+        <button class="auto-sync-pill active" id="btn-toggle-auto-sync" title="Toggle Auto-Sync (every 10s)">
+          <span class="auto-sync-dot"></span>
+          <span>Auto-Sync: ON (10s)</span>
+        </button>
+
+        <!-- Manual Refresh / Sync Button -->
+        <button class="icon-btn" id="btn-manual-sync" title="Sync / Refresh Now" aria-label="Sync Now">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+
+        <!-- Notification Bell with Alert Dot -->
+        <button class="icon-btn" id="btn-notifications" title="System Notifications (3 alerts)" aria-label="Notifications">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="notification-badge"></span>
+        </button>
+
+        <!-- User Profile Circle -->
+        <button class="icon-btn" id="btn-user-profile" title="Operator Profile" aria-label="User profile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </button>
+
+        <!-- Sync Status Pill (Edge/LoRa Mesh) -->
+        <div class="sync-status-pill" id="sync-status-pill" title="Click to toggle between Edge Connected and LoRa Mesh mode">
+          <span class="status-dot"></span>
+          <span class="status-text">Sync Status: Edge Connected - Active Ops</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sub-Navigation Bar -->
+    <nav class="sub-nav" id="sub-nav" aria-label="Dashboard views">
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-tab="Dashboard">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </button>
+        <button class="nav-tab" data-tab="Field Updates">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Field Updates
+        </button>
+        <button class="nav-tab" data-tab="Resources">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          Resources
+        </button>
+        <button class="nav-tab" data-tab="Map View">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          Map View
+        </button>
+        <button class="nav-tab" data-tab="Organizations">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><line x1="8" y1="6" x2="8.01" y2="6"/><line x1="16" y1="6" x2="16.01" y2="6"/><line x1="12" y1="6" x2="12.01" y2="6"/><line x1="12" y1="10" x2="12.01" y2="10"/><line x1="12" y1="14" x2="12.01" y2="14"/></svg>
+          Organizations
+        </button>
+        <button class="nav-tab" data-tab="Reports">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          Reports
+        </button>
+      </div>
+
+      <div class="user-meta-group">
+        <span class="user-org-badge">Logged in as: World Aid Org | Regional Hub (NGO)</span>
+        <span class="user-name-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Sarah Chen
+        </span>
+      </div>
+    </nav>
+
+    <!-- Sub-Header Platform Banner -->
+    <div class="sub-banner">
+      <span>Data View Platform for authorized Government Agencies and registered NGOs</span>
+    </div>
+
+    <!-- Main App Shell -->
+    <div class="app-shell">
+      <!-- Left Thin Vertical Rail -->
+      <aside class="left-rail" id="left-rail" aria-label="Sidebar quick tools">
+        <div class="rail-group">
+          <button class="rail-btn active" title="Dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </button>
+          <button class="rail-btn" title="First Responders & Field Units">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </button>
+          <button class="rail-btn" title="Audit Log & Forms">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </button>
+          <button class="rail-btn" title="System Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+        <div class="rail-group">
+          <button class="rail-btn" title="LoRa Mesh Telemetry">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          </button>
+          <button class="rail-btn" id="btn-reset-db" title="Reset Demo Local Database">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Central Dashboard Grid -->
+      <main class="main-content" id="main-content">
+        <div class="dashboard-grid">
+
+          <!-- ================================================================
+               Column 1: Interactive Map View (Geotagged Heat Map)
+               ================================================================ -->
+          <section class="map-column" aria-label="Geotagged Heat Map">
+            <div class="card map-card">
+              <div class="card-header">
+                <span class="card-title">Map View (Geotagged Heat Map)</span>
+                <span class="card-subtitle">Real-time GPS & Mesh Telemetry</span>
+              </div>
+              <div class="card-body">
+                <!-- Leaflet Map Container -->
+                <div id="map-container"></div>
+
+                <!-- Floating Overlay 1: Active Disaster Zone Legend -->
+                <div class="map-overlay-left" id="map-legend-overlay">
+                  <div class="overlay-title" id="zone-title">Active Disaster Zone (India Hub)</div>
+                  <ul class="legend-list">
+                    <li class="legend-item">
+                      <span class="legend-dot dot-relief"></span>
+                      <span>Relief Distributed</span>
+                    </li>
+                    <li class="legend-item">
+                      <span class="legend-dot dot-affected"></span>
+                      <span>Affected Locations</span>
+                    </li>
+                    <li class="legend-item">
+                      <span class="legend-dot dot-underserved"></span>
+                      <span>Underserved Areas</span>
+                    </li>
+                    <li class="legend-item">
+                      <span class="legend-dot dot-resources"></span>
+                      <span>Resources</span>
+                    </li>
+                    <li class="legend-item">
+                      <span class="legend-dot dot-rescued"></span>
+                      <span>Survivors Rescued</span>
+                    </li>
+                  </ul>
+                  <!-- GPS Detect & Sample Data Buttons -->
+                  <button class="gps-btn" id="btn-detect-gps" type="button" title="Center map directly onto your real GPS/IP location">
+                    <span>📍</span>
+                    <span>Detect My Location (GPS / IP)</span>
+                  </button>
+                  <div class="location-test-row">
+                    <button class="btn-test-location" id="btn-generate-sample-data" type="button" title="Generate realistic sample disaster relief points around current center">
+                      <span>⚡</span>
+                      <span>Generate Sample Data Here</span>
+                    </button>
+                  </div>
+                  <div class="location-coords-badge" id="active-coords-badge">Center: 28.6139° N, 77.2090° E</div>
+                </div>
+
+                <!-- Floating Overlay 2: Map Controls & Heat Map Layers -->
+                <div class="map-overlay-right" id="map-controls-overlay">
+                  <div class="control-section">
+                    <span class="control-label">Operations Hub</span>
+                    <select class="map-select" id="region-select" aria-label="Select Operations Region">
+                      <option value="india-delhi">🇮🇳 India - New Delhi (NCR)</option>
+                      <option value="india-mumbai">🇮🇳 India - Mumbai Coast</option>
+                      <option value="india-bengaluru">🇮🇳 India - Bengaluru Tech Hub</option>
+                      <option value="india-kolkata">🇮🇳 India - Kolkata East</option>
+                      <option value="india-chennai">🇮🇳 India - Chennai South</option>
+                      <option value="india-hyderabad">🇮🇳 India - Hyderabad Hub</option>
+                      <option value="india-pune">🇮🇳 India - Pune Sector</option>
+                      <option value="gps">📍 Auto-Detect (GPS / IP)</option>
+                      <option value="global-ref">🌐 Reference Grid (NYC)</option>
+                    </select>
+                  </div>
+
+                  <div class="control-section">
+                    <span class="control-label">Heat Map Layers</span>
+                    <div class="checkbox-group">
+                      <label class="custom-checkbox">
+                        <input type="checkbox" id="layer-relief" checked />
+                        <span>Relief Distribution</span>
+                      </label>
+                      <label class="custom-checkbox">
+                        <input type="checkbox" id="layer-gaps" />
+                        <span>Gaps & Needs</span>
+                      </label>
+                      <label class="custom-checkbox">
+                        <input type="checkbox" id="layer-rescue" />
+                        <span>Rescue Ops</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="control-section">
+                    <span class="control-label">Time Slider</span>
+                    <select class="map-select" id="time-filter-select" aria-label="Time Filter">
+                      <option value="24h">Last 24 Hrs</option>
+                      <option value="12h">Last 12 Hrs</option>
+                      <option value="6h">Last 6 Hrs</option>
+                      <option value="1h">Last 1 Hr</option>
+                      <option value="all">All Active</option>
+                    </select>
+                  </div>
+
+                  <div class="control-section">
+                    <span class="control-label">Legend</span>
+                    <div class="spectrum-bar" title="Heatmap Density (Low to High)"></div>
+                  </div>
+
+                  <div class="control-section">
+                    <span class="control-label">Area Search</span>
+                    <div class="search-input-group">
+                      <input type="text" class="search-input" id="map-area-search" placeholder="City Grid / Sector" aria-label="Search area or sector" />
+                      <span class="search-icon-inside">🔍</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Map Telemetry Footer -->
+              <div class="map-telemetry-bar">
+                <div class="telemetry-item">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="12 6 12 12 16 14"/></svg>
+                  <span>Grid Latency: 0.4ms | LoRa Mesh Sync Active</span>
+                </div>
+                <div class="telemetry-item">
+                  <span>Click map anywhere to pick GPS coordinates for new report</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ================================================================
+               Column 2: Key Ops, Gaps Identified Bar Chart, Resource Breakdown
+               ================================================================ -->
+          <section class="center-column" aria-label="Operations Overview and Charts">
+            <!-- Widget 1: Key Ops Overview -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Key Ops Overview (Global & Local)</span>
+              </div>
+              <div class="card-body">
+                <div class="kpi-grid">
+                  <div class="kpi-cell">
+                    <span class="kpi-label">Total Relieved</span>
+                    <span class="kpi-value" id="kpi-total-relieved">45,820</span>
+                    <span class="kpi-trend trend-up">↑ +12.4% vs prev 24h</span>
+                  </div>
+                  <div class="kpi-cell">
+                    <span class="kpi-label">Resources Dist.</span>
+                    <span class="kpi-value" id="kpi-resources-dist">112T</span>
+                    <span class="kpi-trend trend-up">↑ +8.1T today</span>
+                  </div>
+                  <div class="kpi-cell">
+                    <span class="kpi-label">Survivors Rescued</span>
+                    <span class="kpi-value" id="kpi-survivors-rescued">2,150</span>
+                    <span class="kpi-trend trend-up">↑ +24 verified</span>
+                  </div>
+                  <div class="kpi-cell">
+                    <span class="kpi-label">Open Needs</span>
+                    <span class="kpi-value" id="kpi-open-needs">89</span>
+                    <span class="kpi-trend trend-warning">⚠️ 14 Critical</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Widget 2: Gaps Identified Bar Chart -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Gaps Identified - <span id="gaps-identified-count">14</span></span>
+              </div>
+              <div class="card-body">
+                <div class="chart-card-meta">
+                  <span class="chart-subtitle">Total Relieved: [NGO] (City Center)</span>
+                  <div class="chart-mini-legend">
+                    <span><span class="legend-block legend-total"></span> Total</span>
+                    <span><span class="legend-block legend-status"></span> Status</span>
+                  </div>
+                </div>
+
+                <!-- Custom High-Contrast HTML/CSS Bar Chart -->
+                <div class="bar-chart-container">
+                  <div class="chart-y-axis">
+                    <span>10,000</span>
+                    <span>8,000</span>
+                    <span>6,000</span>
+                    <span>4,000</span>
+                    <span>2,000</span>
+                    <span>0</span>
+                  </div>
+                  <div class="chart-plot-area" id="bar-chart-plot">
+                    <!-- Dynamic Bars will be rendered here -->
+                  </div>
+                </div>
+
+                <!-- X Axis Category Labels -->
+                <div class="chart-x-labels">
+                  <span class="chart-x-label">Water</span>
+                  <span class="chart-x-label">Food</span>
+                  <span class="chart-x-label">Medical</span>
+                  <span class="chart-x-label">Shelter</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Widget 3: Resource Breakdown -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Resource Breakdown</span>
+              </div>
+              <div class="card-body">
+                <div class="resource-pill-row">
+                  <span style="font-weight:700;color:var(--text-muted);font-size:11px;">Chart</span>
+                  <span class="resource-pill"><span class="res-dot res-water"></span> Water</span>
+                  <span class="resource-pill"><span class="res-dot res-food"></span> Food</span>
+                  <span class="resource-pill"><span class="res-dot res-med"></span> Medical</span>
+                  <span class="resource-pill"><span class="res-dot res-shelter"></span> Shelter</span>
+                </div>
+
+                <!-- Stacked Progress Bar -->
+                <div class="stacked-progress-bar" id="resource-progress-bar">
+                  <!-- Dynamically populated segments -->
+                </div>
+
+                <!-- Detailed Breakdown List -->
+                <div class="resource-stat-list" id="resource-stat-list">
+                  <!-- Dynamically populated resource details -->
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ================================================================
+               Column 3: Live Feeds, Leaderboard, Connectivity, Add Report Action
+               ================================================================ -->
+          <section class="right-column" aria-label="Field Updates and Management">
+            <!-- Widget 1: Recent Field Updates -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <span class="card-title">Recent Field Updates</span>
+                </div>
+                <span class="card-subtitle">Live Feed</span>
+              </div>
+              <div class="card-body">
+                <div class="live-feed-list" id="live-feed-list">
+                  <!-- Feed items loaded from localStorage -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Widget 2: Volunteer Leaderboard -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <span class="card-title">Volunteer Leaderboard</span>
+                </div>
+                <span class="card-subtitle">Organizational Rank</span>
+              </div>
+              <div class="card-body">
+                <div class="leaderboard-list" id="leaderboard-list">
+                  <!-- Leaderboard loaded dynamically -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Widget 3: NGO & Government Connectivity Status -->
+            <div class="card connectivity-card">
+              <div class="card-header">
+                <div>
+                  <span class="card-title">NGO & Government Connectivity Status</span>
+                </div>
+                <span class="card-subtitle">Live status</span>
+              </div>
+              <div class="card-body">
+                <div class="status-row">
+                  <span style="color:var(--text-secondary);font-weight:600;">NGO Devices:</span>
+                  <span id="conn-ngo-devices" style="font-weight:700;color:var(--text-primary);">42 Connected (3 via LoRa Mesh)</span>
+                </div>
+                <div class="status-row">
+                  <span style="color:var(--text-secondary);font-weight:600;">Gov Hubs:</span>
+                  <span class="status-badge-online" id="conn-gov-hubs">18 Online</span>
+                </div>
+                <div class="status-row">
+                  <span style="color:var(--text-secondary);font-weight:600;">Edge Nodes:</span>
+                  <span class="status-badge-online" id="conn-edge-nodes">9/9 Active</span>
+                </div>
+                <div class="sync-central-row">
+                  <span class="spin-icon">🔄</span>
+                  <span id="conn-sync-text">Syncing with Central Server</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Widget 4: Add Relief Activity (+ New Report) -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Add Relief Activity</span>
+              </div>
+              <div class="card-body">
+                <div class="action-box">
+                  <button class="btn-primary" id="btn-open-report-modal" type="button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>+ New Report</span>
+                  </button>
+                  <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:2px;">
+                    Broadcasts instantly to regional edge node and mesh queue.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </main>
+    </div>
+
+    <!-- ======================================================================
+         Modal: Submit New Geotagged Relief Activity Form
+         ====================================================================== -->
+    <div class="modal-backdrop hidden" id="report-modal" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span style="font-size:20px;">📡</span>
+            <span class="modal-title" id="modal-heading">New Geotagged Relief Activity</span>
+          </div>
+          <button class="modal-close-btn" id="btn-close-modal" aria-label="Close dialog">&times;</button>
+        </div>
+
+        <form id="form-new-report">
+          <div class="modal-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="report-type">Activity Type <span class="req">*</span></label>
+                <select class="form-select" id="report-type" required>
+                  <option value="rescue">👥 Survivor Rescue</option>
+                  <option value="food">📦 Food Distribution</option>
+                  <option value="water">💧 Clean Water Supply</option>
+                  <option value="medical">🏥 Medical Aid / Triage</option>
+                  <option value="underserved">⚠️ Underserved Alert (Gap)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="report-org">Reporting Organization <span class="req">*</span></label>
+                <select class="form-select" id="report-org" required>
+                  <option value="World Aid Org [NGO]">World Aid Org [NGO]</option>
+                  <option value="Red Cross">Red Cross</option>
+                  <option value="UN Relief">UN Relief</option>
+                  <option value="LocalVol">Local Volunteers</option>
+                  <option value="Gov Disaster Mgmt">Gov Disaster Management</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="report-sector">Sector / Grid ID <span class="req">*</span></label>
+                <input type="text" class="form-input" id="report-sector" placeholder="e.g. Sector B-4, Area A, D-12" required />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="report-qty">Headcount / Units <span class="req">*</span></label>
+                <input type="number" class="form-input" id="report-qty" min="1" max="10000" value="8" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="report-title">Activity Title & Description <span class="req">*</span></label>
+              <input type="text" class="form-input" id="report-title" placeholder="e.g. Rescued 8 survivors from building perimeter" required />
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <span class="form-label" style="margin-bottom:0;">Geotag Location</span>
+              <button type="button" class="btn-secondary" id="btn-modal-use-gps" style="padding:3px 8px;font-size:11px;width:auto;display:inline-flex;align-items:center;gap:4px;">
+                <span>📍</span> Use Live GPS
+              </button>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="report-lat">Latitude</label>
+                <input type="number" step="0.0001" class="form-input" id="report-lat" value="28.6139" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="report-lng">Longitude</label>
+                <input type="number" step="0.0001" class="form-input" id="report-lng" value="77.2090" />
+              </div>
+            </div>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:-4px;">
+              Tip: You can also click anywhere directly on the map to automatically fill coordinates.
+            </p>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="btn-cancel-modal">Cancel</button>
+            <button type="submit" class="btn-primary" style="width:auto;">Broadcast to Edge Mesh</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 2: Edit Field Report (CRUD Update) -->
+    <div class="modal-backdrop hidden" id="edit-report-modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title" id="edit-modal-title">Edit Field Report</h2>
+            <p class="modal-subtitle">Update activity details and telemetry data</p>
+          </div>
+          <button class="modal-close" id="btn-close-edit-modal" aria-label="Close modal">&times;</button>
+        </div>
+
+        <form id="form-edit-report">
+          <input type="hidden" id="edit-report-id" />
+          <div class="modal-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="edit-report-type">Activity Type</label>
+                <select class="form-select" id="edit-report-type" required>
+                  <option value="rescue">👥 Survivor Rescue</option>
+                  <option value="food">📦 Food Distribution</option>
+                  <option value="water">💧 Clean Water Supply</option>
+                  <option value="medical">🏥 Medical Aid / Triage</option>
+                  <option value="underserved">⚠️ Underserved Alert (Gap)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="edit-report-qty">Headcount / Units</label>
+                <input type="number" class="form-input" id="edit-report-qty" min="1" max="10000" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="edit-report-title">Activity Title</label>
+              <input type="text" class="form-input" id="edit-report-title" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="edit-report-sector">Sector / Location</label>
+              <input type="text" class="form-input" id="edit-report-sector" required />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="btn-cancel-edit-modal">Cancel</button>
+            <button type="submit" class="btn-primary" style="width:auto;">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+    <!-- Vanilla JavaScript Core Engine -->
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>

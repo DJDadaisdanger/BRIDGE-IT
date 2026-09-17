@@ -1,0 +1,6 @@
+{
+  "name": "BridgeIt - Disaster Relief Coordination",
+  "description": "Edge-computing disaster relief coordination platform with geotagged heat maps, real-time field feeds, resource tracking, and local storage database.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
